@@ -2,6 +2,11 @@
 - debug: var=bond_members
 - debug: var=bond_sub_interfaces
 
+- name: "Create the network configuration file for {{bond_ifname}}"
+  template:
+    src: bond_redhat.j2
+    dest: "/etc/sysconfig/network-scripts/ifcfg-{{bond_ifname}}"
+
 - block:
   - name: "RedHat - attach physical interfaces to the bond"
     template:
@@ -25,17 +30,3 @@
     name: network
     state: restarted
   when: bond_members is defined or bond_sub_interfaces is defined
-
-- name: "RedHat Reboot if there was a change"
-  shell: "sleep 5 && reboot"
-  async: 1
-  poll: 0
-  when: bond_task_result is changed
-
-- name: "RedHat - Wait for the reboot to complete if there was a change"
-  wait_for_connection:
-    connect_timeout: 20
-    sleep: 5
-    delay: 5
-    timeout: 300
-  when: bond_task_result is changed
